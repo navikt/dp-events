@@ -9,7 +9,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.kotlin.logging)
-    implementation("ch.qos.logback:logback-classic:1.4.14") // Or latest 1.4.x
+    implementation("ch.qos.logback:logback-classic:1.5.18") // Or latest 1.4.x
     implementation("net.logstash.logback:logstash-logback-encoder:7.4") // For LogstashEncoder
 
     implementation(libs.google.cloud.storage)
