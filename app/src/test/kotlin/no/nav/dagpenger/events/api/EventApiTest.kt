@@ -61,7 +61,7 @@ class EventApiTest {
     ) : EventIngestor() {
         val receivedEvents = mutableListOf<String>()
 
-        override fun storeEvent(
+        override suspend fun storeEvent(
             eventName: String,
             json: String,
         ) {

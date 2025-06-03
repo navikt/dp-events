@@ -6,7 +6,7 @@ import java.time.Instant
 class DuckDbEventIngestor(
     private val store: DuckDbStore,
 ) : EventIngestor() {
-    override fun storeEvent(
+    override suspend fun storeEvent(
         eventName: String,
         json: String,
     ) {

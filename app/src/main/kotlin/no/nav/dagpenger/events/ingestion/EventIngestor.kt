@@ -6,12 +6,12 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 abstract class EventIngestor {
-    abstract fun storeEvent(
+    abstract suspend fun storeEvent(
         eventName: String,
         json: String,
     )
 
-    fun handleEvent(json: String) {
+    suspend fun handleEvent(json: String) {
         val eventName =
             try {
                 val parsed = Json.parseToJsonElement(json).jsonObject

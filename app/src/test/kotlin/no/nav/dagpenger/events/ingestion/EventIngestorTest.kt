@@ -3,6 +3,7 @@ package no.nav.dagpenger.events.ingestion
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 internal class EventIngestorTest {
@@ -11,7 +12,7 @@ internal class EventIngestorTest {
         val json = """{"event_name": "test_event"}"""
         val ingestor = TestEventIngestor()
 
-        ingestor.handleEvent(json)
+        runBlocking { ingestor.handleEvent(json) }
 
         ingestor.storedEvents.size shouldBe 1
         ingestor.storedEvents.first().first shouldBe "test_event"
@@ -25,7 +26,7 @@ internal class EventIngestorTest {
 
         val exception =
             shouldThrow<IllegalArgumentException> {
-                ingestor.handleEvent(json)
+                runBlocking { ingestor.handleEvent(json) }
             }
         exception.message shouldContain "Missing 'event_name'"
     }
@@ -39,7 +40,7 @@ internal class EventIngestorTest {
         // Act & Assert
         val exception =
             shouldThrow<IllegalArgumentException> {
-                ingestor.handleEvent(json)
+                runBlocking { ingestor.handleEvent(json) }
             }
         exception.message shouldContain "Missing 'event_name'"
     }
@@ -53,7 +54,7 @@ internal class EventIngestorTest {
         // Act & Assert
         val exception =
             shouldThrow<IllegalArgumentException> {
-                ingestor.handleEvent(json)
+                runBlocking { ingestor.handleEvent(json) }
             }
         exception.message shouldContain "Malformed JSON"
     }
@@ -61,7 +62,7 @@ internal class EventIngestorTest {
     private class TestEventIngestor : EventIngestor() {
         val storedEvents = mutableListOf<Pair<String, String>>()
 
-        override fun storeEvent(
+        override suspend fun storeEvent(
             eventName: String,
             json: String,
         ) {

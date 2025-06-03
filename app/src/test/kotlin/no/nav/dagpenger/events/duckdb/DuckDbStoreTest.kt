@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.sql.Connection
@@ -31,7 +32,9 @@ class DuckDbStoreTest {
         val eventName = "some_event"
         val payload = "{\"key\": \"value\"}"
 
-        duckDbStore.insertEvent(timestamp, eventName, payload)
+        runBlocking {
+            duckDbStore.insertEvent(timestamp, eventName, payload)
+        }
 
         connection.prepareStatement("SELECT * FROM events").use {
             val rs = it.executeQuery()
