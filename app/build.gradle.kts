@@ -10,7 +10,7 @@ dependencies {
 
     implementation(libs.kotlin.logging)
     implementation("ch.qos.logback:logback-classic:1.5.18") // Or latest 1.4.x
-    implementation("net.logstash.logback:logstash-logback-encoder:7.4") // For LogstashEncoder
+    implementation("net.logstash.logback:logstash-logback-encoder:8.1") // For LogstashEncoder
 
     implementation("com.github.f4b6a3:uuid-creator:5.3.2")
 
