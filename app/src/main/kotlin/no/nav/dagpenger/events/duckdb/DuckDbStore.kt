@@ -5,6 +5,8 @@ import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import java.nio.file.Files
@@ -22,6 +24,8 @@ class DuckDbStore(
     gcsBucketPrefix: String,
     private val storage: Storage = StorageOptions.getDefaultInstance().service,
 ) {
+    private val mutex = Mutex()
+
     init {
         conn.createStatement().use {
             //language=GenericSQL
@@ -44,55 +48,59 @@ class DuckDbStore(
         System.getenv("NAIS_APP_NAME") ?: "unknown-app"
     }
 
-    fun insertEvent(
+    suspend fun insertEvent(
         ts: Instant,
         eventName: String,
         payload: String,
     ) {
-        conn
-            .prepareStatement("INSERT INTO events (ts, event_name, payload, collected_by) VALUES (?, ?, ?, ?)")
-            .use { stmt ->
-                stmt.setTimestamp(1, Timestamp.from(ts))
-                stmt.setString(2, eventName)
-                stmt.setString(3, payload)
-                stmt.setString(4, appName)
-                stmt.executeUpdate()
-            }
+        mutex.withLock {
+            conn
+                .prepareStatement("INSERT INTO events (ts, event_name, payload, collected_by) VALUES (?, ?, ?, ?)")
+                .use { stmt ->
+                    stmt.setTimestamp(1, Timestamp.from(ts))
+                    stmt.setString(2, eventName)
+                    stmt.setString(3, payload)
+                    stmt.setString(4, appName)
+                    stmt.executeUpdate()
+                }
+        }
 
         periodicTrigger.increment()
     }
 
     private suspend fun flushToParquetAndClear(bucketPathPrefix: String) =
         withContext(Dispatchers.IO) {
-            val partition = hivePath(LocalDateTime.now())
-            val gcsFile = "$bucketPathPrefix/$partition.parquet"
-            val localFile = Files.createTempFile("events-", ".parquet")
+            mutex.withLock {
+                val partition = hivePath(LocalDateTime.now())
+                val gcsFile = "$bucketPathPrefix/$partition.parquet"
+                val localFile = Files.createTempFile("events-", ".parquet")
 
-            logger.info { "Making copy of events-table to flush" }
+                logger.info { "Making copy of events-table to flush" }
 
-            conn.autoCommit = false
-            try {
-                conn.createStatement().use { stmt ->
-                    stmt.executeUpdate("CREATE TABLE to_export AS SELECT * FROM events")
-                    stmt.executeUpdate("DELETE FROM events")
+                conn.autoCommit = false
+                try {
+                    conn.createStatement().use { stmt ->
+                        stmt.executeUpdate("CREATE TABLE to_export AS SELECT * FROM events")
+                        stmt.executeUpdate("DELETE FROM events")
+                    }
+                    conn.commit()
+                } catch (e: Exception) {
+                    conn.rollback()
+                    throw e
                 }
-                conn.commit()
-            } catch (e: Exception) {
-                conn.rollback()
-                throw e
+
+                logger.info { "Exporting events to $localFile" }
+
+                conn.createStatement().use { stmt ->
+                    stmt.executeUpdate("COPY to_export TO '$localFile' (FORMAT 'parquet')")
+                    stmt.executeUpdate("DROP TABLE to_export")
+                }
+
+                logger.info { "Copying Parquet-file to $gcsFile" }
+                copyToBucket(gcsFile, localFile)
+
+                logger.info { "Flush finished" }
             }
-
-            logger.info { "Exporting events to $localFile" }
-
-            conn.createStatement().use { stmt ->
-                stmt.executeUpdate("COPY to_export TO '$localFile' (FORMAT 'parquet')")
-                stmt.executeUpdate("DROP TABLE to_export")
-            }
-
-            logger.info { "Copying Parquet-file to $gcsFile" }
-            copyToBucket(gcsFile, localFile)
-
-            logger.info { "Flush finished" }
         }
 
     private fun copyToBucket(

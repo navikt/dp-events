@@ -7,11 +7,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.withTimeout
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 class PeriodicTrigger(
     private val batchSize: Int,
@@ -20,7 +17,6 @@ class PeriodicTrigger(
     private var action: suspend () -> Unit = {}
     private val counter = AtomicInteger(0)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private val mutex = Mutex()
     private var flushJob: Job? = null
 
     fun start() {
@@ -55,14 +51,10 @@ class PeriodicTrigger(
     }
 
     private suspend fun flushSafely() {
-        if (!mutex.tryLock()) return // Avoid overlapping flushes
         try {
-            withTimeout(60.seconds) {
-                action()
-                counter.set(0)
-            }
+            action()
+            counter.set(0)
         } finally {
-            mutex.unlock()
             scheduleIntervalFlush() // Reschedule after successful flush
         }
     }
