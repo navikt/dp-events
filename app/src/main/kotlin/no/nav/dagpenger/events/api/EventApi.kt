@@ -37,6 +37,7 @@ fun Application.eventApi(ingestor: EventIngestor) {
         logger = callLogger
         disableDefaultColors()
         ignore(NaisEndpoints)
+        filter { call -> call.request.path().startsWith("/event") }
     }
 
     routing {
