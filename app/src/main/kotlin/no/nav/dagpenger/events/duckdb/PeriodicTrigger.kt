@@ -26,10 +26,12 @@ class PeriodicTrigger(
     private var flushJob: Job? = null
 
     internal fun start() {
+        logger.info { "Starter å regelmessig flushe events som er færre en batch-størrelse" }
         scheduleIntervalFlush()
     }
 
     internal fun stop() {
+        logger.info { "Avslutter regelmessig flushing" }
         flushJob?.cancel()
         if (counter.get() > 0) {
             runBlocking {
@@ -45,6 +47,7 @@ class PeriodicTrigger(
             // Atomically claim all current events for flushing
             val eventsToFlush = counter.getAndSet(0)
             if (eventsToFlush > 0) {
+                logger.info { "Flusher data etter batch har nådd $eventsToFlush events" }
                 scope.launch {
                     flushSafely()
                 }
@@ -70,6 +73,7 @@ class PeriodicTrigger(
             scope.launch {
                 delay(interval)
                 if (counter.get() == 0) return@launch // No need to flush if counter is zero
+                logger.info { "Flusher data etter interval=$interval med ${counter.get()} events" }
                 flushSafely()
                 counter.set(0)
             }
@@ -79,7 +83,7 @@ class PeriodicTrigger(
         try {
             action.invoke()
         } catch (e: Exception) {
-            logger.error(e) { "Failed to flush data: ${e.message}" }
+            logger.error(e) { "Feilet å flushe data: ${e.message}" }
             throw e
         } finally {
             scheduleIntervalFlush() // Reschedule after successful flush
