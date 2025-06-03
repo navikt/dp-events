@@ -10,20 +10,30 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 
+interface IPeriodicTrigger {
+    fun register(block: suspend () -> Unit): IPeriodicTrigger
+
+    fun increment()
+
+    fun start()
+
+    fun stop()
+}
+
 class PeriodicTrigger(
     private val batchSize: Int,
     private val interval: Duration,
-) {
+) : IPeriodicTrigger {
     private var action: suspend () -> Unit = {}
     private val counter = AtomicInteger(0)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var flushJob: Job? = null
 
-    fun start() {
+    override fun start() {
         scheduleIntervalFlush()
     }
 
-    fun stop() {
+    override fun stop() {
         flushJob?.cancel()
         scope.launch {
             flushSafely()
@@ -31,12 +41,13 @@ class PeriodicTrigger(
         scope.cancel()
     }
 
-    fun increment(by: Int = 1) {
-        val newValue = counter.addAndGet(by)
+    override fun increment() {
+        val newValue = counter.addAndGet(1)
         if (newValue >= batchSize) {
             scope.launch {
                 flushSafely()
             }
+            counter.set(0)
         }
     }
 
@@ -47,19 +58,19 @@ class PeriodicTrigger(
                 delay(interval)
                 if (counter.get() == 0) return@launch // No need to flush if counter is zero
                 flushSafely()
+                counter.set(0)
             }
     }
 
     private suspend fun flushSafely() {
         try {
             action()
-            counter.set(0)
         } finally {
             scheduleIntervalFlush() // Reschedule after successful flush
         }
     }
 
-    fun register(block: suspend () -> Unit): PeriodicTrigger {
+    override fun register(block: suspend () -> Unit): PeriodicTrigger {
         this.action = block
         return this
     }

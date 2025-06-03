@@ -20,7 +20,7 @@ import java.util.UUID
 
 class DuckDbStore(
     private val conn: Connection,
-    private val periodicTrigger: PeriodicTrigger,
+    private val periodicTrigger: IPeriodicTrigger,
     private val gcsBucketEvent: String,
     private val gcsBucketAttribute: String,
     private val storage: Storage = StorageOptions.getDefaultInstance().service,
@@ -121,13 +121,13 @@ class DuckDbStore(
                         }
                 }
                 conn.commit()
+
+                periodicTrigger.increment()
             } catch (e: Exception) {
                 conn.rollback()
                 throw e
             }
         }
-
-        periodicTrigger.increment()
     }
 
     private suspend fun flushToParquetAndClear() =
@@ -144,8 +144,7 @@ class DuckDbStore(
         table: String,
         gcsBucketPrefix: String,
     ) {
-        val partition = hivePath(LocalDateTime.now())
-        val gcsFile = "$gcsBucketPrefix/$partition.parquet"
+        val gcsFile = "$gcsBucketPrefix/${partitionPath()}.parquet"
         val localFile = Files.createTempFile("events-", ".parquet")
         val exportTable = "export_$table"
 
@@ -183,7 +182,7 @@ class DuckDbStore(
         storage.createFrom(blobInfo, localFile)
     }
 
-    private fun hivePath(now: LocalDateTime = LocalDateTime.now()) =
+    private fun partitionPath(now: LocalDateTime = LocalDateTime.now()) =
         "year=${now.year}/month=${now.month.value}/day=${now.dayOfMonth}/${UUID.randomUUID()}"
 
     companion object {

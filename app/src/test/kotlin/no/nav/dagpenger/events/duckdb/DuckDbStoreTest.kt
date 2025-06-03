@@ -2,29 +2,22 @@ package no.nav.dagpenger.events.duckdb
 
 import com.google.cloud.storage.Storage
 import io.kotest.matchers.shouldBe
-import io.mockk.clearMocks
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import no.nav.dagpenger.events.ingestion.Event
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import java.sql.Connection
+import java.nio.file.Path
 import java.sql.DriverManager
 import java.sql.Timestamp
 
 class DuckDbStoreTest {
-    private val connection: Connection = DriverManager.getConnection("jdbc:duckdb:")
-    private val mockPeriodicTrigger: PeriodicTrigger = mockk(relaxed = true)
+    private val connection = DriverManager.getConnection("jdbc:duckdb:")
+    private val periodicTrigger = TestTrigger()
     private val storage = mockk<Storage>(relaxed = true)
 
     private val duckDbStore =
-        DuckDbStore(connection, mockPeriodicTrigger, "test-bucket1", "test-bucket2", storage)
-
-    @AfterEach
-    fun tearDown() {
-        clearMocks(mockPeriodicTrigger)
-    }
+        DuckDbStore(connection, periodicTrigger, "gs://test-bucket/event", "gs://test-bucket/attribute", storage)
 
     @Test
     fun `insertEvent should insert event into database`() {
@@ -50,6 +43,36 @@ class DuckDbStoreTest {
                 rs.getString(4) shouldBe event.json
             }
         }
-        verify { mockPeriodicTrigger.increment() }
+
+        periodicTrigger.counter shouldBe 1
+        periodicTrigger.trigger()
+
+        verify(exactly = 2) {
+            storage.createFrom(any(), any<Path>())
+        }
+    }
+
+    private class TestTrigger : IPeriodicTrigger {
+        var counter: Int = 0
+        var action: suspend () -> Unit = {}
+
+        fun trigger() {
+            runBlocking { action() }
+        }
+
+        override fun register(block: suspend () -> Unit): IPeriodicTrigger {
+            action = block
+            return this
+        }
+
+        override fun increment() {
+            counter++
+        }
+
+        override fun start() {
+        }
+
+        override fun stop() {
+        }
     }
 }
