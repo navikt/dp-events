@@ -42,12 +42,13 @@ class DuckDbStore(
                 
                 CREATE TABLE IF NOT EXISTS event_attribute
                 (
-                    uuid         uuid PRIMARY KEY,
+                    uuid         uuid,
+                    event_name TEXT,
                     key          TEXT,
                     type         TEXT,
                     value_string TEXT,
                     value_bool   BOOLEAN,
-                    value_int    BIGINT,
+                    value_number DOUBLE,
                     created_at   TIMESTAMP
                 );
                 """.trimIndent(),
@@ -75,39 +76,47 @@ class DuckDbStore(
                     conn
                         .prepareStatement(
                             """
-                            INSERT INTO event_attribute (uuid, key, type, value_string, value_bool, value_int, created_at)
-                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                            INSERT INTO event_attribute (uuid, event_name, key, type, value_string, value_bool, value_number, created_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                             """.trimIndent(),
                         ).use { stmt ->
-                            stmt.setString(1, event.eventName)
-                            stmt.setString(2, key)
+                            stmt.setObject(1, event.uuid)
+                            stmt.setString(2, event.eventName)
+                            stmt.setString(3, key)
                             when (value) {
                                 is String -> {
-                                    stmt.setString(3, "string")
-                                    stmt.setString(4, value)
-                                    stmt.setNull(5, java.sql.Types.BOOLEAN)
-                                    stmt.setNull(6, java.sql.Types.BIGINT)
+                                    stmt.setString(4, "string")
+                                    stmt.setString(5, value)
+                                    stmt.setNull(6, java.sql.Types.BOOLEAN)
+                                    stmt.setNull(7, java.sql.Types.DOUBLE)
                                 }
 
                                 is Boolean -> {
-                                    stmt.setString(3, "boolean")
-                                    stmt.setNull(4, java.sql.Types.VARCHAR)
-                                    stmt.setBoolean(5, value)
-                                    stmt.setNull(6, java.sql.Types.BIGINT)
+                                    stmt.setString(4, "boolean")
+                                    stmt.setNull(5, java.sql.Types.VARCHAR)
+                                    stmt.setBoolean(6, value)
+                                    stmt.setNull(7, java.sql.Types.DOUBLE)
                                 }
 
                                 is Long -> {
-                                    stmt.setString(3, "integer")
-                                    stmt.setNull(4, java.sql.Types.VARCHAR)
-                                    stmt.setNull(5, java.sql.Types.BOOLEAN)
-                                    stmt.setLong(6, value)
+                                    stmt.setString(4, "double")
+                                    stmt.setNull(5, java.sql.Types.VARCHAR)
+                                    stmt.setNull(6, java.sql.Types.BOOLEAN)
+                                    stmt.setDouble(7, value.toDouble())
+                                }
+
+                                is Double -> {
+                                    stmt.setString(4, "double")
+                                    stmt.setNull(5, java.sql.Types.VARCHAR)
+                                    stmt.setNull(6, java.sql.Types.BOOLEAN)
+                                    stmt.setDouble(7, value)
                                 }
 
                                 else -> {
                                     throw IllegalArgumentException("Unsupported attribute type: ${value::class.java}")
                                 }
                             }
-                            stmt.setTimestamp(7, Timestamp.from(event.createdAt))
+                            stmt.setTimestamp(8, Timestamp.from(event.createdAt))
                             stmt.executeUpdate()
                         }
                 }

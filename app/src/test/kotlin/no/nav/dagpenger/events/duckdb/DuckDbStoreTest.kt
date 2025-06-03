@@ -31,10 +31,15 @@ class DuckDbStoreTest {
         val eventName = "some_event"
         val payload = "{\"key\": \"value\"}"
 
-        val event = Event(eventName, emptyMap(), payload)
-        runBlocking {
-            duckDbStore.insertEvent(event)
-        }
+        val attributes =
+            mapOf(
+                "string" to "value",
+                "boolean" to true,
+                "number" to 42.0,
+            )
+        val event = Event(eventName, attributes, payload)
+
+        runBlocking { duckDbStore.insertEvent(event) }
 
         connection.prepareStatement("SELECT * FROM event").use {
             val rs = it.executeQuery()
