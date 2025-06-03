@@ -17,7 +17,7 @@ spec:
   externalDataConfiguration:
     sourceFormat: PARQUET
     sourceUris:
-      - gs://{{ bucket.name}}/event-attribute/*.parquet
+      - gs://{{ bucket.name}}/attribute/*.parquet
     autodetect: true
     parquetOptions:
       enableListInference: true
@@ -25,5 +25,5 @@ spec:
     hivePartitioningOptions:
       mode: AUTO
       requirePartitionFilter: false
-      sourceUriPrefix: gs://{{ bucket.name }}/event-attribute/
+      sourceUriPrefix: gs://{{ bucket.name }}/attribute/
 
