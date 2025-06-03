@@ -7,6 +7,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
@@ -30,9 +31,10 @@ class PeriodicTrigger(
 
     internal fun stop() {
         flushJob?.cancel()
-        scope.launch {
-            if (counter.get() == 0) return@launch // No need to flush if counter is zero
-            flushSafely()
+        if (counter.get() > 0) {
+            runBlocking {
+                flushSafely()
+            }
         }
         scope.cancel()
     }
@@ -40,10 +42,13 @@ class PeriodicTrigger(
     private fun increment() {
         val newValue = counter.addAndGet(1)
         if (newValue >= batchSize) {
-            scope.launch {
-                flushSafely()
+            // Atomically claim all current events for flushing
+            val eventsToFlush = counter.getAndSet(0)
+            if (eventsToFlush > 0) {
+                scope.launch {
+                    flushSafely()
+                }
             }
-            counter.set(0)
         }
     }
 
