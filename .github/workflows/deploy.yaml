@@ -78,7 +78,7 @@ jobs:
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
-          RESOURCE: .nais/nais.yaml,.nais/view.yaml
+          RESOURCE: .nais/nais.yaml,.nais/view-event.yaml,.nais/view-event-attribute.yaml
           VARS: .nais/vars-dev.yaml
           VAR: image=${{ needs.build.outputs.image }},project=teamdagpenger-dev-885f
           PRINT_PAYLOAD: true

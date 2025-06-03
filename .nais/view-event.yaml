@@ -1,7 +1,7 @@
 apiVersion: bigquery.cnrm.cloud.google.com/v1beta1
 kind: BigQueryTable
 metadata:
-  name: dp-events-tabell
+  name: dp-event-tabell
   namespace: teamdagpenger
   labels:
     team: teamdagpenger
@@ -10,14 +10,14 @@ metadata:
     cnrm.cloud.google.com/project-id: {{project}}
     cnrm.cloud.google.com/state-into-spec: absent
 spec:
-  resourceID: dp-events-tabell
+  resourceID: dp-event-tabell
   datasetRef:
     external: dataprodukt
   description: "BigQuery tabell som leser Parquet filer fra GCS"
   externalDataConfiguration:
     sourceFormat: PARQUET
     sourceUris:
-      - gs://{{ bucket.name}}/events/*.parquet
+      - gs://{{ bucket.name}}/event/*.parquet
     autodetect: true
     parquetOptions:
       enableListInference: true
@@ -25,5 +25,5 @@ spec:
     hivePartitioningOptions:
       mode: AUTO
       requirePartitionFilter: false
-      sourceUriPrefix: gs://{{ bucket.name }}/events/
+      sourceUriPrefix: gs://{{ bucket.name }}/event/
 

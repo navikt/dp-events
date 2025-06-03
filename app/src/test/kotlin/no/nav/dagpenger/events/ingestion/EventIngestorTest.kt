@@ -62,11 +62,8 @@ internal class EventIngestorTest {
     private class TestEventIngestor : EventIngestor() {
         val storedEvents = mutableListOf<Pair<String, String>>()
 
-        override suspend fun storeEvent(
-            eventName: String,
-            json: String,
-        ) {
-            storedEvents.add(eventName to json)
+        override suspend fun storeEvent(event: Event) {
+            storedEvents.add(event.eventName to event.json)
         }
     }
 }

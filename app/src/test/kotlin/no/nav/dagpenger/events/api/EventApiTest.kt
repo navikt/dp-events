@@ -8,6 +8,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.testing.testApplication
+import no.nav.dagpenger.events.ingestion.Event
 import no.nav.dagpenger.events.ingestion.EventIngestor
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
@@ -61,14 +62,11 @@ class EventApiTest {
     ) : EventIngestor() {
         val receivedEvents = mutableListOf<String>()
 
-        override suspend fun storeEvent(
-            eventName: String,
-            json: String,
-        ) {
+        override suspend fun storeEvent(event: Event) {
             if (flushing) {
                 throw IllegalStateException("Flushing does not allow writes")
             }
-            receivedEvents.add(json)
+            receivedEvents.add(event.json)
         }
     }
 }

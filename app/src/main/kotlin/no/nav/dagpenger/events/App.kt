@@ -14,9 +14,12 @@ private val logger = KotlinLogging.logger {}
 fun main() {
     val batchSize = System.getenv("GCS_BATCH_SIZE")?.toIntOrNull() ?: 1000
     val maxInterval = System.getenv("GCS_MAX_INTERVAL_SECONDS")?.toIntOrNull() ?: 10
-    val gcsBucketPrefix =
-        System.getenv("GCS_BUCKET_PREFIX")
-            ?: throw IllegalArgumentException("Environment variable GCS_BUCKET_PREFIX is not set")
+    val gcsBucketPrefixEvent =
+        System.getenv("GCS_BUCKET_PREFIX_EVENT")
+            ?: throw IllegalArgumentException("Environment variable GCS_BUCKET_PREFIX_EVENT is not set")
+    val gcsBucketPrefixAttribute =
+        System.getenv("GCS_BUCKET_PREFIX_ATTRIBUTE")
+            ?: throw IllegalArgumentException("Environment variable GCS_BUCKET_PREFIX_ATTRIBUTE is not set")
 
     val trigger =
         PeriodicTrigger(batchSize, maxInterval.seconds).apply {
@@ -28,7 +31,12 @@ fun main() {
                 },
             )
         }
-    val store = DuckDbStore.createInMemoryStore(gcsBucketPrefix, trigger)
+    val store =
+        DuckDbStore.createInMemoryStore(
+            gcsBucketPrefixEvent,
+            gcsBucketPrefixAttribute,
+            trigger,
+        )
     val ingestor = DuckDbEventIngestor(store)
 
     embeddedServer(CIO, port = 8080) {
