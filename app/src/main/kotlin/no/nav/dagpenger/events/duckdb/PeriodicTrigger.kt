@@ -7,41 +7,37 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import mu.KotlinLogging
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 
-interface IPeriodicTrigger {
-    fun register(block: suspend () -> Unit): IPeriodicTrigger
-
-    fun increment()
-
-    fun start()
-
-    fun stop()
+fun interface TriggerAction {
+    suspend fun invoke()
 }
 
 class PeriodicTrigger(
     private val batchSize: Int,
     private val interval: Duration,
-) : IPeriodicTrigger {
-    private var action: suspend () -> Unit = {}
+    private val action: TriggerAction,
+) : DuckDbObserver {
     private val counter = AtomicInteger(0)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var flushJob: Job? = null
 
-    override fun start() {
+    internal fun start() {
         scheduleIntervalFlush()
     }
 
-    override fun stop() {
+    internal fun stop() {
         flushJob?.cancel()
         scope.launch {
+            if (counter.get() == 0) return@launch // No need to flush if counter is zero
             flushSafely()
         }
         scope.cancel()
     }
 
-    override fun increment() {
+    private fun increment() {
         val newValue = counter.addAndGet(1)
         if (newValue >= batchSize) {
             scope.launch {
@@ -49,6 +45,18 @@ class PeriodicTrigger(
             }
             counter.set(0)
         }
+    }
+
+    override fun onInsert() = increment()
+
+    fun registerShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                logger.info("Shutdown hook triggered. Cleaning up...")
+                stop()
+                logger.info("Cleanup complete.")
+            },
+        )
     }
 
     private fun scheduleIntervalFlush() {
@@ -64,14 +72,16 @@ class PeriodicTrigger(
 
     private suspend fun flushSafely() {
         try {
-            action()
+            action.invoke()
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to flush data: ${e.message}" }
+            throw e
         } finally {
             scheduleIntervalFlush() // Reschedule after successful flush
         }
     }
 
-    override fun register(block: suspend () -> Unit): PeriodicTrigger {
-        this.action = block
-        return this
+    private companion object {
+        private val logger = KotlinLogging.logger {}
     }
 }

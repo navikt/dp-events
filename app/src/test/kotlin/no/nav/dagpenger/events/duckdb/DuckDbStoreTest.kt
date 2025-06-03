@@ -13,11 +13,12 @@ import java.sql.Timestamp
 
 class DuckDbStoreTest {
     private val connection = DriverManager.getConnection("jdbc:duckdb:")
-    private val periodicTrigger = TestTrigger()
     private val storage = mockk<Storage>(relaxed = true)
-
-    private val duckDbStore =
-        DuckDbStore(connection, periodicTrigger, "gs://test-bucket/event", "gs://test-bucket/attribute", storage)
+    private val duckDbStore = DuckDbStore(connection, "gs://test-bucket/event", "gs://test-bucket/attribute", storage)
+    private val periodicTrigger: TestTrigger =
+        TestTrigger {
+            runBlocking { duckDbStore.flushToParquetAndClear() }
+        }.also { duckDbStore.addObserver(it) }
 
     @Test
     fun `insertEvent should insert event into database`() {
@@ -52,27 +53,17 @@ class DuckDbStoreTest {
         }
     }
 
-    private class TestTrigger : IPeriodicTrigger {
+    private class TestTrigger(
+        var action: suspend () -> Unit = {},
+    ) : DuckDbObserver {
         var counter: Int = 0
-        var action: suspend () -> Unit = {}
 
         fun trigger() {
             runBlocking { action() }
         }
 
-        override fun register(block: suspend () -> Unit): IPeriodicTrigger {
-            action = block
-            return this
-        }
-
-        override fun increment() {
+        override fun onInsert() {
             counter++
-        }
-
-        override fun start() {
-        }
-
-        override fun stop() {
         }
     }
 }

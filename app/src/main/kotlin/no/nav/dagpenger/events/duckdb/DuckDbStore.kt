@@ -18,13 +18,27 @@ import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.util.UUID
 
-class DuckDbStore(
+fun interface DuckDbObserver {
+    fun onInsert()
+}
+
+class DuckDbStore internal constructor(
     private val conn: Connection,
-    private val periodicTrigger: IPeriodicTrigger,
     private val gcsBucketEvent: String,
     private val gcsBucketAttribute: String,
-    private val storage: Storage = StorageOptions.getDefaultInstance().service,
+    private val storage: Storage,
 ) {
+    constructor(
+        gcsBucketPrefixEvent: String,
+        gcsBucketPrefixAttribute: String,
+    ) : this(
+        DriverManager.getConnection("jdbc:duckdb:"),
+        gcsBucketPrefixEvent,
+        gcsBucketPrefixAttribute,
+        StorageOptions.getDefaultInstance().service,
+    )
+
+    private val observers = mutableListOf<DuckDbObserver>()
     private val mutex = Mutex()
 
     init {
@@ -54,8 +68,10 @@ class DuckDbStore(
                 """.trimIndent(),
             )
         }
+    }
 
-        periodicTrigger.register { flushToParquetAndClear() }.start()
+    fun addObserver(observer: DuckDbObserver) {
+        observers.add(observer)
     }
 
     suspend fun insertEvent(event: Event) {
@@ -122,7 +138,7 @@ class DuckDbStore(
                 }
                 conn.commit()
 
-                periodicTrigger.increment()
+                observers.emit { onInsert() }
             } catch (e: Exception) {
                 conn.rollback()
                 throw e
@@ -130,7 +146,7 @@ class DuckDbStore(
         }
     }
 
-    private suspend fun flushToParquetAndClear() =
+    suspend fun flushToParquetAndClear() =
         withContext(Dispatchers.IO) {
             mutex.withLock {
                 flushTable("event", gcsBucketEvent)
@@ -188,15 +204,6 @@ class DuckDbStore(
     companion object {
         private val logger = KotlinLogging.logger { }
 
-        fun createInMemoryStore(
-            gcsBucketPrefixEvent: String,
-            gcsBucketPrefixAttribute: String,
-            trigger: PeriodicTrigger,
-        ) = DuckDbStore(
-            DriverManager.getConnection("jdbc:duckdb:"),
-            trigger,
-            gcsBucketPrefixEvent,
-            gcsBucketPrefixAttribute,
-        )
+        private fun Iterable<DuckDbObserver>.emit(block: DuckDbObserver.() -> Unit) = forEach { observer -> observer.block() }
     }
 }

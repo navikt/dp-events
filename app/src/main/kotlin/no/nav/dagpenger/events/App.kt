@@ -21,22 +21,14 @@ fun main() {
         System.getenv("GCS_BUCKET_PREFIX_ATTRIBUTE")
             ?: throw IllegalArgumentException("Environment variable GCS_BUCKET_PREFIX_ATTRIBUTE is not set")
 
-    val trigger =
-        PeriodicTrigger(batchSize, maxInterval.seconds).apply {
-            Runtime.getRuntime().addShutdownHook(
-                Thread {
-                    logger.info("Shutdown hook triggered. Cleaning up...")
-                    stop()
-                    logger.info("Cleanup complete.")
-                },
-            )
-        }
     val store =
-        DuckDbStore.createInMemoryStore(
-            gcsBucketPrefixEvent,
-            gcsBucketPrefixAttribute,
-            trigger,
-        )
+        DuckDbStore(gcsBucketPrefixEvent, gcsBucketPrefixAttribute).also { store ->
+            PeriodicTrigger(batchSize, maxInterval.seconds) { store.flushToParquetAndClear() }
+                .apply {
+                    store.addObserver(this)
+                    registerShutdownHook()
+                }.start()
+        }
     val ingestor = DuckDbEventIngestor(store)
 
     embeddedServer(CIO, port = 8080) {
