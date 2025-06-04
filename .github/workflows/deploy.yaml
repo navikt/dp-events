@@ -7,6 +7,9 @@ on:
     paths-ignore:
       - 'docs/**'
 
+env:
+  dataset: dp_events
+
 jobs:
   build:
     name: Build and publish Docker image
@@ -79,7 +82,7 @@ jobs:
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/cnrm/dataset.yaml #,.nais/cnrm/permission.yaml
-          VAR: project=teamdagpenger-dev-885f,dataset=dp-events
+          VAR: project=teamdagpenger-dev-885f,dataset={{ env.dataset }}
           PRINT_PAYLOAD: true
 
   deploy-views:
@@ -99,7 +102,7 @@ jobs:
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/views/parquet-table.yaml
-          VAR: project=teamdagpenger-dev-885f,table=${{ matrix.table }}
+          VAR: project=teamdagpenger-dev-885f,dataset={{ env.dataset },table=${{ matrix.table }}
           PRINT_PAYLOAD: true
 
   deploy-dev:

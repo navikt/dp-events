@@ -6,3 +6,5 @@ metadata:
 spec:
   location: europe-north1
   description: Datasett for dp-event
+  projectRef:
+    external: "{{project}}"
