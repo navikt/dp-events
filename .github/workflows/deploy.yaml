@@ -8,7 +8,7 @@ on:
       - 'docs/**'
 
 env:
-  dataset: dp_events
+  dataset: events
 
 jobs:
   build:
