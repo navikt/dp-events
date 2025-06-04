@@ -103,6 +103,7 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/views/parquet-table.yaml
           VAR: project=teamdagpenger-dev-885f,dataset=${{ env.dataset }},table=${{ matrix.table }}
+          VARS: .nais/vars-dev.yaml
           PRINT_PAYLOAD: true
 
   deploy-dev:
