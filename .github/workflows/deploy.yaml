@@ -66,7 +66,7 @@ jobs:
           team: teamdagpenger
 
   deploy-cnrm:
-    name: Deploy views
+    name: Deploy CNRM resources
     needs: [ build ]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -78,7 +78,7 @@ jobs:
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
-          RESOURCE: .nais/cnrm/dataset.yaml,.nais/cnrm/permission.yaml
+          RESOURCE: .nais/cnrm/dataset.yaml #,.nais/cnrm/permission.yaml
           VAR: project=teamdagpenger-dev-885f,dataset=dp-events
           PRINT_PAYLOAD: true
 
