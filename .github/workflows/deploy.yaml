@@ -65,6 +65,43 @@ jobs:
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           team: teamdagpenger
 
+  deploy-cnrm:
+    name: Deploy views
+    needs: [ build ]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: dev-gcp
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/cnrm/dataset.yaml,.nais/cnrm/permission.yaml
+          VAR: project=teamdagpenger-dev-885f,dataset=dp-events
+          PRINT_PAYLOAD: true
+
+  deploy-views:
+    name: Deploy views
+    needs: [ deploy-cnrm ]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: dev-gcp
+    permissions:
+      id-token: write
+    strategy:
+      matrix:
+        table: [ events, events-attributes ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/views/parquet-table.yaml
+          VAR: project=teamdagpenger-dev-885f,table=${{ matrix.table }}
+          PRINT_PAYLOAD: true
+
   deploy-dev:
     name: Deploy to dev
     needs: [ build ]
@@ -78,7 +115,7 @@ jobs:
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
-          RESOURCE: .nais/nais.yaml,.nais/view-event.yaml,.nais/view-event-attribute.yaml
+          RESOURCE: .nais/nais.yaml
           VARS: .nais/vars-dev.yaml
-          VAR: image=${{ needs.build.outputs.image }},project=teamdagpenger-dev-885f
+          VAR: image=${{ needs.build.outputs.image }}
           PRINT_PAYLOAD: true

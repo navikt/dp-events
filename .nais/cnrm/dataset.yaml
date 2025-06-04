@@ -1,0 +1,8 @@
+apiVersion: bigquery.cnrm.cloud.google.com/v1beta1
+kind: BigQueryDataset
+metadata:
+  name: "{{dataset}}"
+  namespace: teamdagpenger
+spec:
+  location: europe-north1
+  description: Datasett for dp-event

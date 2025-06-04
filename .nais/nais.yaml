@@ -32,9 +32,9 @@ spec:
     - name: GCS_MAX_INTERVAL_SECONDS
       value: "10"
     - name: GCS_BUCKET_PREFIX_EVENT
-      value: "gs://{{ bucket.name }}/event"
+      value: "gs://{{ bucket.name }}/events"
     - name: GCS_BUCKET_PREFIX_ATTRIBUTE
-      value: "gs://{{ bucket.name }}/attribute"
+      value: "gs://{{ bucket.name }}/events-attributes"
   gcp:
     buckets:
       - name: "{{ bucket.name }}"

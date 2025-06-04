@@ -3,7 +3,7 @@ kind: IAMPolicyMember
 metadata:
   name: dp-events-bucket-viewer
 spec:
-  member: serviceAccount:nais-sa-cnrm@teamdagpenger-dev-885f.iam.gserviceaccount.com
+  member: serviceAccount:nais-sa-cnrm@{{project}}.iam.gserviceaccount.com
   role: roles/storage.objectViewer
   resourceRef:
     kind: StorageBucket
