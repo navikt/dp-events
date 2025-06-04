@@ -68,8 +68,8 @@ jobs:
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           team: teamdagpenger
 
-  deploy-cnrm:
-    name: Deploy CNRM resources
+  deploy-dataset:
+    name: Deploy BigQuery dataset
     needs: [ build ]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -86,8 +86,8 @@ jobs:
           PRINT_PAYLOAD: true
 
   deploy-views:
-    name: Deploy views
-    needs: [ deploy-cnrm ]
+    name: Deploy BigQuery views
+    needs: [ deploy-dataset ]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: dev-gcp
