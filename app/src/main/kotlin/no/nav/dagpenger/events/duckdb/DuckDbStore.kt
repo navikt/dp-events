@@ -48,7 +48,7 @@ class DuckDbStore internal constructor(
                 """
                 CREATE TABLE IF NOT EXISTS event
                 (
-                    uuid       uuid PRIMARY KEY,
+                    uuid       TEXT PRIMARY KEY,
                     created_at TIMESTAMP,
                     event_name TEXT,
                     payload    TEXT
@@ -56,8 +56,8 @@ class DuckDbStore internal constructor(
                 
                 CREATE TABLE IF NOT EXISTS event_attribute
                 (
-                    uuid         uuid,
-                    event_name TEXT,
+                    uuid         TEXT,
+                    event_name   TEXT,
                     key          TEXT,
                     type         TEXT,
                     value_string TEXT,
