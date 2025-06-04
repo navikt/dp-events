@@ -9,6 +9,7 @@ metadata:
     cnrm.cloud.google.com/management-conflict-prevention-policy: none
     cnrm.cloud.google.com/state-into-spec: absent
 spec:
+  resourceID: events
   location: europe-north1
   description: Datasett for dp-event
   projectRef:
