@@ -8,7 +8,7 @@ on:
       - 'docs/**'
 
 env:
-  dataset: dp_events
+  dataset: dp-events
 
 jobs:
   build:
@@ -82,7 +82,7 @@ jobs:
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/cnrm/dataset.yaml #,.nais/cnrm/permission.yaml
-          VAR: project=teamdagpenger-dev-885f,dataset={{ env.dataset }}
+          VAR: project=teamdagpenger-dev-885f,dataset=${{ env.dataset }}
           PRINT_PAYLOAD: true
 
   deploy-views:
@@ -102,7 +102,7 @@ jobs:
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/views/parquet-table.yaml
-          VAR: project=teamdagpenger-dev-885f,dataset={{ env.dataset },table=${{ matrix.table }}
+          VAR: project=teamdagpenger-dev-885f,dataset=${{ env.dataset }},table=${{ matrix.table }}
           PRINT_PAYLOAD: true
 
   deploy-dev:
