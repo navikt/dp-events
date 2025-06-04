@@ -100,7 +100,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           echo "SCHEMA<<EOF" >> "$GITHUB_ENV"
-          cat .nais/views/${{matrix.table}}.schema.yaml > $GITHUB_ENV
+          cat .nais/views/${{matrix.table}}.schema.yaml >> $GITHUB_ENV
           echo "EOF" >> "$GITHUB_ENV"
       - uses: nais/deploy/actions/deploy@v2
         env:
