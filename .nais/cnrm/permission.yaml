@@ -2,8 +2,14 @@ apiVersion: iam.cnrm.cloud.google.com/v1beta1
 kind: IAMPolicyMember
 metadata:
   name: dp-events-bucket-viewer
+  labels:
+    team: teamdagpenger
+  annotations:
+    cnrm.cloud.google.com/management-conflict-prevention-policy: none
+    cnrm.cloud.google.com/project-id: "{{project}}"
+    cnrm.cloud.google.com/state-into-spec: absent
 spec:
-  member: serviceAccount:nais-sa-cnrm@{{project}}.iam.gserviceaccount.com
+  member: "serviceAccount:nais-sa-cnrm@{{project}}.iam.gserviceaccount.com"
   role: roles/storage.objectViewer
   resourceRef:
     kind: StorageBucket

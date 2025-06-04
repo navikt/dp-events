@@ -1,23 +1,23 @@
 apiVersion: bigquery.cnrm.cloud.google.com/v1beta1
 kind: BigQueryTable
 metadata:
-  name: {{table}}
+  name: "{{table}}"
   namespace: teamdagpenger
   labels:
     team: teamdagpenger
   annotations:
     cnrm.cloud.google.com/management-conflict-prevention-policy: none
-    cnrm.cloud.google.com/project-id: {{project}}
+    cnrm.cloud.google.com/project-id: "{{project}}"
     cnrm.cloud.google.com/state-into-spec: absent
 spec:
-  resourceID: {{table}}
+  resourceID: "{{table}}"
   datasetRef:
-    name: {{dataset}}
+    name: "{{dataset}}"
   description: "{{table}} fra dp-event basert på Parquet-filer i GCS"
   externalDataConfiguration:
     sourceFormat: PARQUET
     sourceUris:
-      - gs://{{ bucket.name}}/{{table}}/*.parquet
+      - "gs://{{ bucket.name}}/{{table}}/*.parquet"
     autodetect: true
     parquetOptions:
       enableListInference: true
@@ -25,5 +25,5 @@ spec:
     hivePartitioningOptions:
       mode: AUTO
       requirePartitionFilter: false
-      sourceUriPrefix: gs://{{ bucket.name }}/{{table}}/
+      sourceUriPrefix: "gs://{{ bucket.name }}/{{table}}/"
 
