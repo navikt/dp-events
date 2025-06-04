@@ -42,3 +42,8 @@ spec:
         publicAccessPrevention: true
         lifecycleCondition:
           age: 7 # days
+  observability:
+    logging:
+      destinations:
+        - id: loki
+        - id: elastic
