@@ -1,0 +1,17 @@
+fields:
+  - name: uuid
+    type: STRING
+  - name: event_name
+    type: STRING
+  - name: key
+    type: STRING
+  - name: type
+    type: STRING
+  - name: value_string
+    type: STRING
+  - name: value_bool
+    type: BOOLEAN
+  - name: value_number
+    type: FLOAT
+  - name: created_at
+    type: TIMESTAMP

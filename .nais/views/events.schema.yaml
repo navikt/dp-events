@@ -1,0 +1,10 @@
+fields:
+  - name: uuid
+    type: STRING
+    mode: REQUIRED
+  - name: created_at
+    type: TIMESTAMP
+  - name: event_name
+    type: STRING
+  - name: payload
+    type: STRING

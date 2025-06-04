@@ -26,4 +26,5 @@ spec:
       mode: AUTO
       requirePartitionFilter: false
       sourceUriPrefix: "gs://{{ bucket.name }}/{{table}}/"
-
+    schema:
+      "{{SCHEMA}}"
