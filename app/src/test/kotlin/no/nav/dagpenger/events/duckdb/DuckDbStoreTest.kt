@@ -38,7 +38,7 @@ class DuckDbStoreTest {
         connection.prepareStatement("SELECT * FROM event").use {
             val rs = it.executeQuery()
             while (rs.next()) {
-                rs.getObject(1) shouldBe event.uuid
+                rs.getString(1) shouldBe event.uuid.toString()
                 rs.getTimestamp(2) shouldBe Timestamp.from(event.createdAt)
                 rs.getString(3) shouldBe event.eventName
                 rs.getString(4) shouldBe event.json
