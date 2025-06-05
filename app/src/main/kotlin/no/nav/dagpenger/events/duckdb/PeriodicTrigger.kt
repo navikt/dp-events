@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 fun interface TriggerAction {
     suspend fun invoke()
@@ -71,7 +72,7 @@ class PeriodicTrigger(
         flushJob?.cancel() // Cancel any previous timer
         flushJob =
             scope.launch {
-                delay(interval)
+                delay(interval.withJitter((500.milliseconds)))
                 logger.info { "Sjekker etter $interval om det skal flushes. Har ${counter.get()} events." }
                 if (counter.get() == 0) {
                     // No need to flush if counter is zero
@@ -97,4 +98,7 @@ class PeriodicTrigger(
     private companion object {
         private val logger = KotlinLogging.logger {}
     }
+
+    private fun Duration.withJitter(tolerance: Duration) =
+        this + (-tolerance.inWholeMilliseconds..tolerance.inWholeMilliseconds).random().milliseconds
 }
