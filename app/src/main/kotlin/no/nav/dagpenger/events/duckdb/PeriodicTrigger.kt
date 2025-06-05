@@ -72,8 +72,8 @@ class PeriodicTrigger(
         flushJob =
             scope.launch {
                 delay(interval)
+                logger.info { "Sjekker etter $interval om det skal flushes. Har ${counter.get()} events." }
                 if (counter.get() == 0) return@launch // No need to flush if counter is zero
-                logger.info { "Flusher data etter interval=$interval med ${counter.get()} events" }
                 flushSafely()
                 counter.set(0)
             }

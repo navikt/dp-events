@@ -18,7 +18,7 @@ spec:
     sourceFormat: PARQUET
     sourceUris:
       - "gs://{{ bucket.name}}/{{table}}/*.parquet"
-    autodetect: true
+    autodetect: false
     parquetOptions:
       enableListInference: true
       enumAsString: false
