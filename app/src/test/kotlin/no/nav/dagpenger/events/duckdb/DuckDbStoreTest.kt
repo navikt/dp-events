@@ -35,7 +35,7 @@ class DuckDbStoreTest {
 
         runBlocking { duckDbStore.insertEvent(event) }
 
-        connection.prepareStatement("SELECT * FROM event").use {
+        connection.prepareStatement("SELECT * FROM events").use {
             val rs = it.executeQuery()
             while (rs.next()) {
                 rs.getString(1) shouldBe event.uuid.toString()
@@ -43,6 +43,18 @@ class DuckDbStoreTest {
                 rs.getString(3) shouldBe event.eventName
                 rs.getString(4) shouldBe event.json
             }
+        }
+        connection.prepareStatement("SELECT * FROM event_attributes").use {
+            val rs = it.executeQuery()
+            rs.next()
+            rs.getString(1) shouldBe event.uuid.toString()
+            rs.getString(2) shouldBe event.eventName
+            rs.getString(3) shouldBe "string"
+            rs.getString(4) shouldBe attributes.keys.first()
+            rs.getString(5) shouldBe attributes.values.first()
+            rs.getString(6) shouldBe null
+            rs.getString(7) shouldBe null
+            rs.getTimestamp(8) shouldBe Timestamp.from(event.createdAt)
         }
 
         periodicTrigger.counter shouldBe 1

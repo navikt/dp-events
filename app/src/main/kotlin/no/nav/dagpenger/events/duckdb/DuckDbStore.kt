@@ -46,7 +46,7 @@ class DuckDbStore internal constructor(
             //language=PostgreSQL
             it.executeUpdate(
                 """
-                CREATE TABLE IF NOT EXISTS event
+                CREATE TABLE IF NOT EXISTS events
                 (
                     uuid       TEXT PRIMARY KEY,
                     created_at TIMESTAMP,
@@ -54,7 +54,7 @@ class DuckDbStore internal constructor(
                     payload    TEXT
                 );
                 
-                CREATE TABLE IF NOT EXISTS event_attribute
+                CREATE TABLE IF NOT EXISTS event_attributes
                 (
                     uuid         TEXT,
                     event_name   TEXT,
@@ -79,7 +79,7 @@ class DuckDbStore internal constructor(
             conn.autoCommit = false
             try {
                 conn
-                    .prepareStatement("INSERT INTO event (uuid, created_at, event_name, payload) VALUES (?, ?, ?, ?)")
+                    .prepareStatement("INSERT INTO events (uuid, created_at, event_name, payload) VALUES (?, ?, ?, ?)")
                     .use { stmt ->
                         stmt.setString(1, event.uuid.toString())
                         stmt.setTimestamp(2, Timestamp.from(event.createdAt))
@@ -92,7 +92,7 @@ class DuckDbStore internal constructor(
                     conn
                         .prepareStatement(
                             """
-                            INSERT INTO event_attribute (uuid, event_name, key, type, value_string, value_bool, value_number, created_at)
+                            INSERT INTO event_attributes (uuid, event_name, key, type, value_string, value_bool, value_number, created_at)
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                             """.trimIndent(),
                         ).use { stmt ->
@@ -149,8 +149,8 @@ class DuckDbStore internal constructor(
     suspend fun flushToParquetAndClear() =
         withContext(Dispatchers.IO) {
             mutex.withLock {
-                flushTable("event", gcsBucketEvent)
-                flushTable("event_attribute", gcsBucketAttribute)
+                flushTable("events", gcsBucketEvent)
+                flushTable("event_attributes", gcsBucketAttribute)
 
                 logger.info { "Flush finished" }
             }
