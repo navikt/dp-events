@@ -1,5 +1,5 @@
 [versions]
-kotlin-gradle-plugin = "2.2.10"
+kotlin-gradle-plugin = "2.2.20"
 ktlint-gradle-plugin = "12.1.2"
 ktor = "3.2.3"
 mockk = "1.14.5"
