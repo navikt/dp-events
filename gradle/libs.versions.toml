@@ -2,7 +2,7 @@
 kotlin-gradle-plugin = "2.2.20"
 ktlint-gradle-plugin = "12.1.2"
 ktor = "3.3.0"
-mockk = "1.14.5"
+mockk = "1.14.6"
 
 [plugins]
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin-gradle-plugin" }
